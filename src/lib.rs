@@ -1,3 +1,74 @@
+//!
+//! Dead simple log utils for debug in Rust.
+//!
+//! - 🦀 Enabled only in debug mode when DEBUG environment variable is set
+//! - 🔊 Only perform log in files whose paths match DEBUG="filename". Match all by
+//!   using DEBUG="", or DEBUG="\*"
+//! - 📦 Group output with `debug_group`
+//!
+//! The output log is super easy to read on VS Code with sticky scroll enabled.
+//!
+//! <img src="https://user-images.githubusercontent.com/18425020/202741062-0467b470-32ca-4a23-b280-73fa7d4c7868.gif" width="600"/>
+//!
+//! # Example
+//!
+//! ```rust
+//! use debug_log::{debug_dbg, debug_log, group, group_end};
+//! group!("A Group");
+//! {
+//!     group!("Sub A Group");
+//!     let arr: Vec<_> = (0..3).collect();
+//!     debug_dbg!(&arr);
+//!     {
+//!         group!("Sub Sub A Group");
+//!         debug_dbg!(&arr);
+//!         group_end!();
+//!     }
+//!     debug_log!("Hi");
+//!     debug_dbg!(&arr);
+//!     group_end!();
+//! }
+//!
+//! {
+//!     group!("B Group");
+//!     debug_log!("END");
+//!     group_end!();
+//! }
+//! group_end!();
+//! ```
+//!
+//! Run with `DEBUG=* cargo run`
+//!
+//! Output
+//!
+//! ```log
+//! A Group {
+//!     Sub A Group {
+//!         [src/lib.rs:144] &arr = [
+//!             0,
+//!             1,
+//!             2,
+//!         ]
+//!         Sub Sub A Group {
+//!             [src/lib.rs:147] &arr = [
+//!                 0,
+//!                 1,
+//!                 2,
+//!             ]
+//!         }
+//!         [src/lib.rs:150] Hi
+//!         [src/lib.rs:151] &arr = [
+//!             0,
+//!             1,
+//!             2,
+//!         ]
+//!     }
+//!     B Group {
+//!         [src/lib.rs:157] END
+//!     }
+//! }
+//! ```
+
 #[cfg(debug_assertions)]
 mod debug {
     const DEBUG: Option<&'static str> = std::option_env!("DEBUG");
@@ -25,15 +96,15 @@ mod debug {
     }
 
     #[doc(hidden)]
-    pub fn dbg<T: std::fmt::Debug>(value: T, line: &str) {
+    pub fn dbg<T: std::fmt::Debug>(value: T, name: &str, line: &str) {
         let s = format!("{:#?}", value);
         let mut ans = String::new();
         ans.push_str(&"    ".repeat(get_level()));
-        ans.push('[');
-        ans.push_str(line);
-        ans.push(']');
-        for line in s.split('\n') {
-            ans.push_str(&"    ".repeat(get_level()));
+        ans.push_str(format!("[{}] {} = ", line, name).as_str());
+        for (i, line) in s.split('\n').enumerate() {
+            if i != 0 {
+                ans.push_str(&"    ".repeat(get_level()));
+            }
             ans.push_str(line);
             ans.push('\n')
         }
@@ -74,7 +145,7 @@ mod debug {
         ($($val:expr),+ $(,)?) => {
             let line = format!("{}:{}", file!(), line!());
             if $crate::should_log(&line) {
-                ($($crate::dbg($val, &line)),+,);
+                ($($crate::dbg($val, stringify!($val), &line)),+,);
             }
         };
         () => {
@@ -109,6 +180,12 @@ mod debug {
     #[macro_export]
     macro_rules! group {
         ($arg:tt) => {};
+        () => {};
+    }
+
+    #[macro_export]
+    macro_rules! group_end {
+        () => {};
     }
 
     #[macro_export]
@@ -117,14 +194,13 @@ mod debug {
         () => {};
     }
 
+    /// The differences between this and `dbg!()` are
+    ///
+    /// - This method only logs when DEBUG env is set and match the file name
+    /// - The output of this method is indented. Using dbg!() directly would break the indentation.
     #[macro_export]
-    macro_rules! group {
-        ($arg:tt) => {};
-        () => {};
-    }
-
-    #[macro_export]
-    macro_rules! group_end {
+    macro_rules! debug_dbg {
+        ($($val:expr),+ $(,)?) => {};
         () => {};
     }
 }
@@ -136,11 +212,13 @@ mod tests {
     use crate::{debug_dbg, debug_log, group, group_end};
 
     #[test]
+    /// Run this test with
+    /// DEBUG=* cargo test -- --nocapture &> data.log
     fn it_works() {
         group!("A Group");
         {
             group!("Sub A Group");
-            let arr: Vec<_> = (0..30).collect();
+            let arr: Vec<_> = (0..3).collect();
             debug_dbg!(&arr);
             {
                 group!("Sub Sub A Group");

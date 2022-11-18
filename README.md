@@ -44,6 +44,8 @@ fn main() {
 }
 ```
 
+Run with `DEBUG=* cargo run`
+
 Output
 
 ```log
