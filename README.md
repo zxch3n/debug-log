@@ -7,8 +7,8 @@
 Dead simple log utils for debug in Rust.
 
 - 🦀 Enabled only in debug mode when DEBUG environment variable is set
-- 🔊 Only perform log in files whose paths match DEBUG="filename". Match all by
-  using DEBUG="", or DEBUG="\*"
+- 🔊 Only perform log in files whose paths match `DEBUG="filename"`. Match all
+  by using `DEBUG=""`, or `DEBUG="*"`
 - 📦 Group output with `debug_group`
 
 The output log is super easy to read on VS Code with sticky scroll enabled.
