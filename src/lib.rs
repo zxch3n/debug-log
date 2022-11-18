@@ -137,15 +137,26 @@ mod tests {
 
     #[test]
     fn it_works() {
-        group!("A");
-        let arr: Vec<_> = (0..100).collect();
-        debug_log!("Hello, world! {:?}", arr);
-        debug_dbg!(&arr);
-        debug_dbg!();
-        debug_log!("Hello, world!");
-        group!("B");
-        debug_log!("Hello, world!");
-        group_end!();
+        group!("A Group");
+        {
+            group!("Sub A Group");
+            let arr: Vec<_> = (0..30).collect();
+            debug_dbg!(&arr);
+            {
+                group!("Sub Sub A Group");
+                debug_dbg!(&arr);
+                group_end!();
+            }
+            debug_log!("Hi");
+            debug_dbg!(&arr);
+            group_end!();
+        }
+
+        {
+            group!("B Group");
+            debug_log!("END");
+            group_end!();
+        }
         group_end!();
     }
 }

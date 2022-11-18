@@ -2,7 +2,7 @@
 name = "debug-log"
 version = "0.1.0"
 edition = "2021"
-description = "Dead simple log utils for debug purpose. Filter and group logs."
+description = "Dead simple log utils for debug. Filter and group logs."
 license = "MIT"
 readme = "README.md"
 homepage = "https://github.com/zxch3n/debug-log"
