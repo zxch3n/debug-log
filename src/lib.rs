@@ -117,6 +117,7 @@ mod debug {
         DEBUG.map_or(false, |x| x.is_empty() || x == "*" || file.contains(x))
     }
 
+    /// Group the following logs until group_end!()
     #[macro_export]
     macro_rules! group {
         ($arg:tt) => {
@@ -131,6 +132,7 @@ mod debug {
         };
     }
 
+    /// End the previous group
     #[macro_export]
     macro_rules! group_end {
         () => {
@@ -140,6 +142,7 @@ mod debug {
         };
     }
 
+    /// It can be filtered by DEBUG env and can only log on debug mode
     #[macro_export]
     macro_rules! debug_dbg {
         ($($val:expr),+ $(,)?) => {
@@ -157,6 +160,7 @@ mod debug {
         }
     }
 
+    /// Use it like println!(). Except it can be filtered by DEBUG env and can only log on debug mode
     #[macro_export]
     macro_rules! debug_log {
         ($($arg:tt)*) => {{
@@ -177,27 +181,27 @@ mod debug {
 
 #[cfg(not(debug_assertions))]
 mod debug {
+    /// Group the following logs until [debug_log::group_end]
     #[macro_export]
     macro_rules! group {
         ($arg:tt) => {};
         () => {};
     }
 
+    /// End the previous group
     #[macro_export]
     macro_rules! group_end {
         () => {};
     }
 
+    /// Use it like println!(). Except it can be filtered by DEBUG env and can only log on debug mode
     #[macro_export]
     macro_rules! debug_log {
         ($($arg:tt)*) => {{}};
         () => {};
     }
 
-    /// The differences between this and `dbg!()` are
-    ///
-    /// - This method only logs when DEBUG env is set and match the file name
-    /// - The output of this method is indented. Using dbg!() directly would break the indentation.
+    /// It's just dbg!() with indent and can be filtered by DEBUG env
     #[macro_export]
     macro_rules! debug_dbg {
         ($($val:expr),+ $(,)?) => {};
