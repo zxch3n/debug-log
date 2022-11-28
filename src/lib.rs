@@ -185,7 +185,7 @@ mod debug {
     /// Group the following logs until [debug_log::group_end]
     #[macro_export]
     macro_rules! group {
-        ($arg:tt) => {};
+        ($($arg:tt)*) => {};
         () => {};
     }
 
