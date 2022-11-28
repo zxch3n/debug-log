@@ -113,6 +113,19 @@ mod debug {
     }
 
     #[doc(hidden)]
+    pub fn prepend_indent(s: String) -> String {
+        let mut ans = String::new();
+        for (i, line) in s.split('\n').enumerate() {
+            if i != 0 {
+                ans.push_str(&"    ".repeat(get_level()));
+            }
+            ans.push_str(line);
+            ans.push('\n')
+        }
+        ans
+    }
+
+    #[doc(hidden)]
     pub fn should_log(file: &str) -> bool {
         DEBUG.map_or(false, |x| x.is_empty() || x == "*" || file.contains(x))
     }
@@ -169,7 +182,8 @@ mod debug {
             if $crate::should_log(&line) {
                 eprint!("{}", "    ".repeat($crate::get_level()));
                 eprint!("[{}] ", line);
-                eprintln!($($arg)*);
+                let s = format!($($arg)*);
+                eprintln!("{}", $crate::prepend_indent(s));
             }
         }};
         () => {

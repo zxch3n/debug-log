@@ -1,6 +1,6 @@
 [package]
 name = "debug-log"
-version = "0.1.3"
+version = "0.1.4"
 edition = "2021"
 description = "Dead simple log utils for debug. Filter and group logs."
 license = "MIT"
