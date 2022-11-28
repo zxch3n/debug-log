@@ -120,11 +120,12 @@ mod debug {
     /// Group the following logs until group_end!()
     #[macro_export]
     macro_rules! group {
-        ($arg:tt) => {
-            if $crate::should_log(&file!()) {
-                $crate::indent($arg);
+        ($($arg:tt)*) => {{
+            let line = format!("{}:{}", file!(), line!());
+            if $crate::should_log(&line) {
+                $crate::indent(&format!($($arg)*));
             }
-        };
+        }};
         () => {
             if $crate::should_log(&file!()) {
                 $crate::indent("".to_string());
