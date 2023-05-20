@@ -6,10 +6,12 @@
 
 Dead simple log utils for debug in Rust.
 
-- 🦀 Enabled only in debug mode when DEBUG environment variable is set
-- 🔊 Only perform log in files whose paths match `DEBUG="filename"`. Match all
-  by using `DEBUG=""`, or `DEBUG="*"`
+- 🦀 Enabled only in debug mode when `DEBUG` environment variable is set. You
+  can change the `DEBUG` value in runtime as well by `set_debug`.
+- 🔊 Only log in files whose paths match `DEBUG="filename"`. Match all by using
+  `DEBUG=""`, or `DEBUG="*"`
 - 📦 Group output with `debug_group`
+- 📤 WASM support. It will use the console API
 
 The output log is super easy to read on VS Code with sticky scroll enabled.
 

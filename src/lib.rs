@@ -5,6 +5,7 @@
 //! - 🔊 Only perform log in files whose paths match `DEBUG="filename"`. Match all by
 //!   using `DEBUG=""`, or `DEBUG="*"`
 //! - 📦 Group output with `debug_group`
+//! - 📤 WASM support. It will use the console API.
 //!
 //! The output log is super easy to read on VS Code with sticky scroll enabled.
 //!
@@ -79,6 +80,7 @@ mod debug {
         Lazy::new(|| Mutex::new(std::option_env!("DEBUG").map(|x| x.to_owned())));
     static LEVELS: Mutex<Vec<String>> = Mutex::new(Vec::new());
 
+    /// Change the DEBUG value to filter tests
     pub fn set_debug(s: &str) {
         *DEBUG.lock().unwrap() = Some(s.to_owned());
     }
@@ -191,7 +193,7 @@ mod debug {
     pub fn should_log(file: &str) -> bool {
         let lock = DEBUG.lock().unwrap();
         lock.as_ref()
-            .map_or(false, |x| x.is_empty() || x == "*" || file.contains(x))
+            .map_or(false, |x| !x.is_empty() && (x == "*" || file.contains(x)))
     }
 
     /// Group the following logs until group_end!()
@@ -259,6 +261,8 @@ mod debug {
 
 #[cfg(not(debug_assertions))]
 mod debug {
+    pub fn set_debug(s: &str) {}
+
     /// Group the following logs until [debug_log::group_end]
     #[macro_export]
     macro_rules! group {

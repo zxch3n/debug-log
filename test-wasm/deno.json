@@ -1,5 +1,6 @@
 {
   "tasks": {
+    "release": "wasm-pack build --release --target nodejs",
     "build": "wasm-pack build --dev --target nodejs",
     "test": "node test.js"
   }
