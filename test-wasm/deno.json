@@ -1,0 +1,6 @@
+{
+  "tasks": {
+    "build": "wasm-pack build --dev --target nodejs",
+    "test": "node test.js"
+  }
+}
