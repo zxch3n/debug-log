@@ -71,25 +71,27 @@
 
 #[cfg(debug_assertions)]
 mod debug {
+    use std::sync::Mutex;
+
     const DEBUG: Option<&'static str> = std::option_env!("DEBUG");
-    static mut LEVELS: Vec<String> = vec![];
+    static mut LEVELS: Mutex<Vec<String>> = Mutex::new(Vec::new());
 
     #[doc(hidden)]
     pub fn get_level() -> usize {
-        unsafe { LEVELS.len() }
+        unsafe { LEVELS.lock().unwrap().len() }
     }
 
     #[doc(hidden)]
     pub fn indent(name: &str) {
         eprint!("{}", "    ".repeat(get_level()));
         eprintln!("{} {{", name);
-        unsafe { LEVELS.push(name.to_string()) }
+        unsafe { LEVELS.lock().unwrap().push(name.to_string()) }
     }
 
     #[doc(hidden)]
     pub fn outdent() {
         unsafe {
-            LEVELS.pop();
+            LEVELS.lock().unwrap().pop();
         }
         eprint!("{}", "    ".repeat(get_level()));
         eprintln!("}}");
