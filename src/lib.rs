@@ -69,12 +69,68 @@
 //! }
 //! ```
 
-#[cfg(debug_assertions)]
+#[cfg(all(debug_assertions))]
 mod debug {
     use std::sync::Mutex;
 
-    const DEBUG: Option<&'static str> = std::option_env!("DEBUG");
-    static mut LEVELS: Mutex<Vec<String>> = Mutex::new(Vec::new());
+    use once_cell::sync::Lazy;
+
+    static DEBUG: Lazy<Mutex<Option<String>>> =
+        Lazy::new(|| Mutex::new(std::option_env!("DEBUG").map(|x| x.to_owned())));
+    static LEVELS: Mutex<Vec<String>> = Mutex::new(Vec::new());
+
+    pub fn set_debug(s: &str) {
+        *DEBUG.lock().unwrap() = Some(s.to_owned());
+    }
+
+    #[cfg(feature = "wasm")]
+    pub mod console {
+        use wasm_bindgen::prelude::wasm_bindgen;
+
+        #[wasm_bindgen]
+        extern "C" {
+            // Use `js_namespace` here to bind `console.log(..)` instead of just
+            // `log(..)`
+            #[wasm_bindgen(js_namespace = console)]
+            pub fn log(s: &str);
+
+            #[wasm_bindgen(js_namespace = console)]
+            pub fn group(s: &str);
+
+            #[wasm_bindgen(js_namespace = console)]
+            pub fn groupEnd();
+        }
+    }
+
+    #[doc(hidden)]
+    #[macro_export]
+    macro_rules! inner_println {
+        ($($arg:tt)+) => {{
+            if $crate::should_log(&file!()) {
+                #[cfg(not(feature="wasm"))]
+                {
+                    eprintln!($($arg)*);
+                }
+                #[cfg(feature="wasm")]
+                {
+                    let s = format!($($arg)+);
+                    $crate::debug::console::log(&s);
+                }
+            }
+        }};
+        () => {
+            if $crate::should_log(&file!()) {
+                #[cfg(not(feature="wasm"))]
+                {
+                    eprintln!();
+                }
+                #[cfg(feature="wasm")]
+                {
+                    $crate::console::log("");
+                }
+            }
+        };
+    }
 
     #[doc(hidden)]
     pub fn get_level() -> usize {
@@ -83,8 +139,8 @@ mod debug {
 
     #[doc(hidden)]
     pub fn indent(name: &str) {
-        eprint!("{}", "    ".repeat(get_level()));
-        eprintln!("{} {{", name);
+        let space = format!("{}", "    ".repeat(get_level()));
+        inner_println!("{}{} {{", space, name);
         unsafe { LEVELS.lock().unwrap().push(name.to_string()) }
     }
 
@@ -93,8 +149,8 @@ mod debug {
         unsafe {
             LEVELS.lock().unwrap().pop();
         }
-        eprint!("{}", "    ".repeat(get_level()));
-        eprintln!("}}");
+        let space = format!("{}", "    ".repeat(get_level()));
+        inner_println!("{}}}", space);
     }
 
     #[doc(hidden)]
@@ -111,7 +167,11 @@ mod debug {
             ans.push('\n')
         }
 
-        eprint!("{}", ans);
+        if ans.ends_with('\n') {
+            ans.drain(ans.len() - 1..);
+        }
+
+        inner_println!("{}", ans);
     }
 
     #[doc(hidden)]
@@ -129,7 +189,9 @@ mod debug {
 
     #[doc(hidden)]
     pub fn should_log(file: &str) -> bool {
-        DEBUG.map_or(false, |x| x.is_empty() || x == "*" || file.contains(x))
+        let lock = DEBUG.lock().unwrap();
+        lock.as_ref()
+            .map_or(false, |x| x.is_empty() || x == "*" || file.contains(x))
     }
 
     /// Group the following logs until group_end!()
@@ -170,8 +232,8 @@ mod debug {
         () => {
             let line = format!("{}:{}", file!(), line!());
             if $crate::should_log(&line) {
-                eprint!("{}", "    ".repeat($crate::get_level()));
-                eprint!("[{}] ", line);
+                let space = format!("{}", "    ".repeat($crate::get_level()));
+                $crate::inner_println!("{}[{}] ",space, line);
             }
         }
     }
@@ -182,15 +244,14 @@ mod debug {
         ($($arg:tt)*) => {{
             let line = format!("{}:{}", file!(), line!());
             if $crate::should_log(&line) {
-                eprint!("{}", "    ".repeat($crate::get_level()));
-                eprint!("[{}] ", line);
+                let prefix = format!("{}[{}] ", "    ".repeat($crate::get_level()), line);
                 let s = format!($($arg)*);
-                eprintln!("{}", $crate::prepend_indent(s));
+                $crate::inner_println!("{}{}", prefix, $crate::prepend_indent(s));
             }
         }};
         () => {
             if $crate::should_log(&file!()) {
-                $crate::eprint!("\n")
+                $crate::inner_println();
             }
         };
     }

@@ -1,0 +1,10 @@
+{
+  "rust-analyzer.cargo.extraEnv": {
+    "DEBUG": "*"
+  },
+  "rust-analyzer.runnableEnv": {
+    "DEBUG": "*"
+  },
+  "rust-analyzer.cargo.features": [],
+  "rust-analyzer.linkedProjects": ["./test-wasm/Cargo.toml"]
+}
