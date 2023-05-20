@@ -4,7 +4,7 @@
   <p></p>
 </div>
 
-Dead simple log utils for debug in Rust.
+Simple log utils for debugging in Rust.
 
 - 🦀 Enabled only in debug mode when `DEBUG` environment variable is set. You
   can change the `DEBUG` value in runtime as well by `set_debug`.

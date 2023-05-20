@@ -1,8 +1,8 @@
 [package]
 name = "debug-log"
-version = "0.1.4"
+version = "0.2.0"
 edition = "2021"
-description = "Dead simple log utils for debug. Filter and group logs."
+description = "dbg! and eprintln! that only run on debug mode. WASM is supported."
 license = "MIT"
 readme = "README.md"
 homepage = "https://github.com/zxch3n/debug-log"
