@@ -116,7 +116,7 @@ mod debug {
                 #[cfg(feature="wasm")]
                 {
                     let s = format!($($arg)+);
-                    $crate::debug::console::log(&s);
+                    $crate::console::log(&s);
                 }
             }
         }};
@@ -136,21 +136,19 @@ mod debug {
 
     #[doc(hidden)]
     pub fn get_level() -> usize {
-        unsafe { LEVELS.lock().unwrap().len() }
+        LEVELS.lock().unwrap().len()
     }
 
     #[doc(hidden)]
     pub fn indent(name: &str) {
         let space = format!("{}", "    ".repeat(get_level()));
         inner_println!("{}{} {{", space, name);
-        unsafe { LEVELS.lock().unwrap().push(name.to_string()) }
+        LEVELS.lock().unwrap().push(name.to_string())
     }
 
     #[doc(hidden)]
     pub fn outdent() {
-        unsafe {
-            LEVELS.lock().unwrap().pop();
-        }
+        LEVELS.lock().unwrap().pop();
         let space = format!("{}", "    ".repeat(get_level()));
         inner_println!("{}}}", space);
     }
