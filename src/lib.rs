@@ -85,10 +85,11 @@ mod debug {
         *DEBUG.lock().unwrap() = Some(s.to_owned());
     }
 
-    #[cfg(feature = "wasm")]
     pub mod console {
+        #[cfg(all(feature = "wasm", target_arch = "wasm32"))]
         use wasm_bindgen::prelude::wasm_bindgen;
 
+        #[cfg(all(feature = "wasm", target_arch = "wasm32"))]
         #[wasm_bindgen]
         extern "C" {
             // Use `js_namespace` here to bind `console.log(..)` instead of just
@@ -102,6 +103,21 @@ mod debug {
             #[wasm_bindgen(js_namespace = console)]
             pub fn groupEnd();
         }
+
+        #[cfg(not(all(feature = "wasm", target_arch = "wasm32")))]
+        pub use patch::*;
+        #[cfg(not(all(feature = "wasm", target_arch = "wasm32")))]
+        mod patch {
+            pub fn log(s: &str) {
+                eprintln!("{}", s);
+            }
+
+            pub fn group(s: &str) {
+                eprintln!("{}", s);
+            }
+
+            pub fn groupEnd() {}
+        }
     }
 
     #[doc(hidden)]
@@ -109,26 +125,20 @@ mod debug {
     macro_rules! inner_println {
         ($($arg:tt)+) => {{
             if $crate::should_log(&file!()) {
-                #[cfg(not(feature="wasm"))]
-                {
-                    eprintln!($($arg)*);
-                }
-                #[cfg(feature="wasm")]
-                {
+                if cfg!(all(feature = "wasm", target_arch = "wasm32")) {
                     let s = format!($($arg)+);
                     $crate::console::log(&s);
+                } else {
+                    eprintln!($($arg)+);
                 }
             }
         }};
         () => {
             if $crate::should_log(&file!()) {
-                #[cfg(not(feature="wasm"))]
-                {
-                    eprintln!();
-                }
-                #[cfg(feature="wasm")]
-                {
+                if cfg!(all(feature = "wasm", target_arch = "wasm32")) {
                     $crate::console::log("");
+                } else {
+                    eprintln!();
                 }
             }
         };
