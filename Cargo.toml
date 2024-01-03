@@ -1,6 +1,6 @@
 [package]
 name = "debug-log"
-version = "0.2.2"
+version = "0.3.0"
 edition = "2021"
 description = "dbg! and eprintln! that only run on debug mode. WASM is supported."
 license = "MIT"
