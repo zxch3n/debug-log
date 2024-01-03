@@ -14,7 +14,7 @@
 //! # Example
 //!
 //! ```rust
-//! use debug_log::{debug_dbg, debug_log, group, group_end};
+//! use debug_log::{debug_dbg, debug_log, group};
 //! group!("A Group");
 //! {
 //!     group!("Sub A Group");
@@ -23,19 +23,15 @@
 //!     {
 //!         group!("Sub Sub A Group");
 //!         debug_dbg!(&arr);
-//!         group_end!();
 //!     }
 //!     debug_log!("Hi");
 //!     debug_dbg!(&arr);
-//!     group_end!();
 //! }
 //!
 //! {
 //!     group!("B Group");
 //!     debug_log!("END");
-//!     group_end!();
 //! }
-//! group_end!();
 //! ```
 //!
 //! Run with `DEBUG=* cargo run`
@@ -204,30 +200,35 @@ mod debug {
             .map_or(false, |x| !x.is_empty() && (x == "*" || file.contains(x)))
     }
 
-    /// Group the following logs until group_end!()
+    /// Group the following logs until the guard is dropped
     #[macro_export]
     macro_rules! group {
-        ($($arg:tt)*) => {{
-            let line = format!("{}:{}", file!(), line!());
-            if $crate::should_log(&line) {
-                $crate::indent(&format!($($arg)*));
-            }
-        }};
+        ($($arg:tt)*) => {
+            let __debug_log_group_guard = {
+                let line = format!("{}:{}", file!(), line!());
+                let mut guard = None;
+                if $crate::should_log(&line) {
+                    $crate::indent(&format!($($arg)*));
+                    guard = Some($crate::GroupGuard);
+                }
+                guard
+            };
+        };
         () => {
+            let mut __debug_log_group_guard= None;
             if $crate::should_log(&file!()) {
                 $crate::indent("".to_string());
+                __debug_log_group_guard = Some($crate::GroupGuard);
             }
         };
     }
 
-    /// End the previous group
-    #[macro_export]
-    macro_rules! group_end {
-        () => {
-            if $crate::should_log(&file!()) {
-                $crate::outdent();
-            }
-        };
+    #[doc(hidden)]
+    pub struct GroupGuard;
+    impl Drop for GroupGuard {
+        fn drop(&mut self) {
+            crate::outdent();
+        }
     }
 
     /// It can be filtered by DEBUG env and can only log on debug mode
@@ -271,17 +272,15 @@ mod debug {
 mod debug {
     pub fn set_debug(s: &str) {}
 
-    /// Group the following logs until [debug_log::group_end]
+    /// Group the following logs until the guard is dropped
     #[macro_export]
     macro_rules! group {
-        ($($arg:tt)*) => {};
-        () => {};
-    }
-
-    /// End the previous group
-    #[macro_export]
-    macro_rules! group_end {
-        () => {};
+        ($($arg:tt)*) => {
+            None
+        };
+        () => {
+            None
+        };
     }
 
     /// Use it like println!(). Except it can be filtered by DEBUG env and can only log on debug mode
@@ -297,19 +296,23 @@ mod debug {
         ($($val:expr),+ $(,)?) => {};
         () => {};
     }
+
+    #[doc(hidden)]
+    pub struct GroupGuard;
 }
 
 pub use debug::*;
 
 #[cfg(test)]
 mod tests {
-    use crate::{debug_dbg, debug_log, group, group_end};
+    use crate::{debug_dbg, debug_log, group};
 
     #[test]
     /// Run this test with
     /// DEBUG=* cargo test -- --nocapture &> data.log
     fn it_works() {
         group!("A Group");
+        group!("C Group");
         {
             group!("Sub A Group");
             let arr: Vec<_> = (0..3).collect();
@@ -317,18 +320,14 @@ mod tests {
             {
                 group!("Sub Sub A Group");
                 debug_dbg!(&arr);
-                group_end!();
             }
             debug_log!("Hi");
             debug_dbg!(&arr);
-            group_end!();
         }
 
         {
             group!("B Group");
             debug_log!("END");
-            group_end!();
         }
-        group_end!();
     }
 }

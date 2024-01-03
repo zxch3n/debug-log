@@ -24,6 +24,5 @@ impl MyStruct {
         debug_log::group!("group");
         debug_log::debug_log!("haha");
         debug_dbg!(self);
-        debug_log::group_end!();
     }
 }
