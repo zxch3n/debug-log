@@ -275,12 +275,8 @@ mod debug {
     /// Group the following logs until the guard is dropped
     #[macro_export]
     macro_rules! group {
-        ($($arg:tt)*) => {
-            None
-        };
-        () => {
-            None
-        };
+        ($($arg:tt)*) => {};
+        () => {};
     }
 
     /// Use it like println!(). Except it can be filtered by DEBUG env and can only log on debug mode
